@@ -872,39 +872,46 @@ def NormkNN(data_as_DataFrame, k = 5, order = 2 ):
             
     return ImputekNN
 
-def CosinekNN(Data, k = 5 ):
-    """CosinekNN(Data) -> Cosine similarity k Nearest Neighbors directed graph with uniform outdegree of k
+def CustomkNN(data_as_DataFrame, DistanceMethod, k = 5 ):
+    """CustomkNN(data_as_DataFrame) -> Custom distance measure k Nearest Neighbors directed graph with uniform outdegree of k
+    
+    DistanceMethod is user function of the form 
+    
+    DistanceMethod(x,y) -> dist,  where dist >= 0  and  dist=0 means x=y
 
     Parameters are 
 
     k:  number of neighbors
-
     """
     
-    m,n = Data.shape
-    DistanceMatrix = zeros( shape = (m,m)  )  
+    m,n = data_as_DataFrame.shape
+    DistanceMatrix = inf*ones( shape = (m,m)  ) 
+    inds = data_as_DataFrame.index
     
     for i in range(m):
-        for j in range(m):
-            DistanceMatrix[i,j] = 1 - dot( Data[i],  Data[j] ) / norm(Data[i])/norm(Data[j])
+        cnt0 = 0
+        for j in range(i+1,m):
+            DistanceMatrix[i,j] = DistanceMethod(  data_as_DataFrame.ix[inds[i]] , data_as_DataFrame.ix[inds[j]]  )
+            if( DistanceMatrix[i,j] == 0.0 ): cnt0 += 1
+            if( cnt0 > k): break
     
     DistanceData = [ (i,j,DistanceMatrix[i,j] )  for i in range(m) for j in range(i+1,m) ] 
     DistanceData = array( DistanceData, dtype = [ ('row1', int), ('row2', int), ( 'distance', float ) ] )
     ndarray.sort( DistanceData, order='distance' )
     
-    kNN = networkx.DiGraph()
-    kNN.add_nodes_from( list(range(m)) )
+    ImputekNN = networkx.DiGraph()
+    ImputekNN.add_nodes_from( inds )
     
     for distdat in DistanceData:
-        if kNN.out_degree(distdat[0]) < k:
-            kNN.add_edge(distdat[0], distdat[1] )
-        if kNN.out_degree(distdat[1]) < k:   
-            kNN.add_edge(distdat[1], distdat[0] )
+        if ImputekNN.out_degree(inds[distdat[0]]) < k:
+            ImputekNN.add_edge(inds[distdat[0]], inds[distdat[1]] )
+        if ImputekNN.out_degree(inds[distdat[1]]) < k:   
+            ImputekNN.add_edge(inds[distdat[1]], inds[distdat[0]] )
             
-    return kNN
+    return ImputekNN
+    
  
- 
-def Impute(data_as_DataFrame, kNNGraph, Method = IgnoringNan.mean):
+def Impute(data_as_DataFrame, kNNGraph, Method = IgnoringNan.mean, target = None ):
     """Impute(data_as_DataFrame,Graph) -> pandas DataFrame with nan's imputed
     
     Imputation is via Graph Neighborhoods of kNNGraph
