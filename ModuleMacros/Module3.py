@@ -854,7 +854,7 @@ def NormkNN(data_as_DataFrame, k = 5, order = 2 ):
     try:
         Data = data_as_DataFrame.as_matrix()
     except:
-        pass
+        Data = data_as_DataFrame
         
     m,n = Data.shape
     DistanceMatrix = zeros( shape = (m,m)  )  
