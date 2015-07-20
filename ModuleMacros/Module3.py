@@ -847,9 +847,15 @@ def NormkNN(data_as_DataFrame, k = 5, order = 2 ):
     k:  number of neighbors
 
     order: order of the norm
+    
+    Note: data_as_DataFrame can also be a numpy array 
     """
     
-    Data = data_as_DataFrame.as_matrix()
+    try:
+        Data = data_as_DataFrame.as_matrix()
+    except:
+        pass
+        
     m,n = Data.shape
     DistanceMatrix = zeros( shape = (m,m)  )  
     
@@ -917,9 +923,18 @@ def Impute(data_as_DataFrame, kNNGraph, Method = IgnoringNan.mean, target = None
     Imputation is via Graph Neighborhoods of kNNGraph
     Method is applied to each neighborhood array of values for a 
     vertex with an nan
+    
+    Note: data_as_DataFrame can also be a numpy array 
     """
     
-    DFrame = data_as_DataFrame.copy()
+    try:
+        data_as_DataFrame.columns
+        data_as_DataFrame.index
+    
+        DFrame = data_as_DataFrame.copy()
+    except:
+        DFrame = DataFrame( data_as_DataFrame )
+        
     cols = DFrame.columns
     inds = DFrame.index
     Data = DFrame.as_matrix()
